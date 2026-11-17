@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hindsight</title>
+<style>
+:root{
+  --bg:#f6f5f1; --panel:#ffffff; --ink:#1c1b19; --mute:#6b675f; --line:#e4e1d8;
+  --accent:#1f6f5c; --hi:#c23b22; --med:#c98a12; --low:#6b7f9a; --ok:#2e7d4f;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141413; --panel:#1d1d1b; --ink:#ecebe6; --mute:#9a968c; --line:#2d2c29;
+    --accent:#4fb89a; --hi:#ef6a52; --med:#e0aa3e; --low:#8aa0bd; --ok:#58b97c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141413; --panel:#1d1d1b; --ink:#ecebe6; --mute:#9a968c; --line:#2d2c29;
+  --accent:#4fb89a; --hi:#ef6a52; --med:#e0aa3e; --low:#8aa0bd; --ok:#58b97c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;align-items:baseline;gap:16px;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:2}
+header h1{margin:0;font-size:17px;letter-spacing:.02em}
+header .repo{color:var(--mute);font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+main{display:grid;grid-template-columns:340px 1fr;gap:20px;padding:20px;max-width:1280px;margin:0 auto}
+@media(max-width:860px){main{grid-template-columns:1fr;padding:16px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.list{padding:6px}
+.svc{display:block;width:100%;text-align:left;border:0;border-radius:8px;padding:10px 12px;margin:0}
+.svc:hover{background:var(--bg);color:inherit}
+.svc.on{background:var(--bg);box-shadow:inset 3px 0 0 var(--accent)}
+.svc .top{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.svc .meta{color:var(--mute);font-size:12px;margin-top:2px}
+.bar{height:5px;border-radius:3px;background:var(--line);margin-top:8px;display:flex;overflow:hidden}
+.bar i{display:block;height:100%}
+.bar .h{background:var(--hi)} .bar .g{background:var(--med)}
+.legend{padding:10px 14px;color:var(--mute);font-size:12px;border-top:1px solid var(--line)}
+.legend b{display:inline-block;width:8px;height:8px;border-radius:2px;margin:0 4px 0 8px;vertical-align:baseline}
+.detail{padding:20px}
+h2{margin:0 0 4px;font-size:20px}
+h3{margin:22px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
+.sub{color:var(--mute)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:12px}
+.chip.y{color:var(--ok);border-color:var(--ok)} .chip.n{color:var(--hi);border-color:var(--hi)} .chip.na{color:var(--mute)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:16px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{color:var(--mute);font-size:12px}
+.row{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.sev{font-size:11px;font-weight:700;min-width:54px}
+.sev.HIGH{color:var(--hi)} .sev.MEDIUM{color:var(--med)} .sev.LOW{color:var(--low)}
+.loc{font-family:var(--mono);font-size:12px;color:var(--mute)}
+a.file{font-family:var(--mono);font-size:12.5px;color:var(--accent);cursor:pointer;text-decoration:none}
+a.file:hover{text-decoration:underline}
+.chaos{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-top:8px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.chaos code{font-family:var(--mono);font-size:12px;display:block;word-break:break-all}
+.chaos small{color:var(--mute)}
+.tl{position:relative;margin:6px 0 0 8px;padding-left:22px;border-left:2px solid var(--line)}
+.ev{position:relative;padding:6px 0 10px}
+.ev::before{content:"";position:absolute;left:-30px;top:12px;width:14px;height:14px;border-radius:50%;background:var(--panel);border:2px solid var(--mute)}
+.ev.fix::before{border-color:var(--hi);background:var(--hi)}
+.ev .d{font-family:var(--mono);font-size:12px;color:var(--mute)}
+.ev .s{font-weight:500}
+.ev .m{color:var(--mute);font-size:12px}
+.tag{font-size:10px;font-weight:700;color:#fff;background:var(--hi);border-radius:3px;padding:1px 5px;margin-right:6px;vertical-align:1px}
+svg.spark{width:100%;height:64px;display:block}
+.score{display:flex;align-items:baseline;gap:12px;margin:4px 0 8px}
+.score b{font-size:34px;line-height:1}
+.v{font-size:11px;font-weight:700;min-width:62px}
+.v.PASS,.v.OK,.g-A,.g-B{color:var(--ok)} .v.PARTIAL,.g-C{color:var(--med)} .v.FAIL,.g-D,.g-F{color:var(--hi)}
+.empty{color:var(--mute);padding:30px;text-align:center}
+.err{color:var(--hi);padding:20px}
+.back{margin-bottom:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hindsight</h1>
+  <span class="repo" id="repo"></span>
+  <button id="refresh" title="Re-scan the repo">Refresh</button>
+</header>
+<main>
+  <section class="card" aria-label="Services">
+    <div class="list" id="list"></div>
+    <div class="legend">Bar: <b style="background:var(--hi)"></b>history risk <b style="background:var(--med)"></b>resilience gaps</div>
+  </section>
+  <section class="card detail" id="detail" aria-live="polite"><div class="empty">Loading…</div></section>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let REPORT = null, SELECTED = null;
+
+async function api(url) {
+  const r = await fetch(url);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+function renderList() {
+  $("list").innerHTML = REPORT.services.map((s, i) => `
+    <button class="svc ${s.path === SELECTED ? "on" : ""}" data-path="${esc(s.path)}">
+      <div class="top"><span>${i + 1}. ${esc(s.name)}</span><span>${s.priority}</span></div>
+      <div class="meta">${s.fix_commits} fixes · ${s.commits} commits · ${s.outbound_calls} calls${s.drill ? ` · drill <b class="g-${s.drill.grade}">${s.drill.grade} ${s.drill.score}</b>` : ""}</div>
+      <div class="bar" title="history ${s.history_risk} · gaps ${s.gap_score}">
+        <i class="h" style="width:${s.history_risk / 2}%"></i><i class="g" style="width:${s.gap_score / 2}%"></i>
+      </div>
+    </button>`).join("");
+  document.querySelectorAll(".svc").forEach((b) => b.onclick = () => select(b.dataset.path));
+}
+
+function chip(label, v) {
+  const cls = v === null ? "na" : v ? "y" : "n";
+  return `<span class="chip ${cls}">${label}: ${v === null ? "n/a" : v ? "yes" : "NO"}</span>`;
+}
+
+function spark(events) {
+  if (!events.length) return "";
+  const months = {};
+  events.forEach((e) => { const k = e.date.slice(0, 7); months[k] = months[k] || {all: 0, fix: 0}; months[k].all++; if (e.fix) months[k].fix++; });
+  const present = Object.keys(months).sort();
+  const keys = [];
+  let [y, m] = present[0].split("-").map(Number);
+  const [ly, lm] = present[present.length - 1].split("-").map(Number);
+  while (y < ly || (y === ly && m <= lm)) {
+    const k = `${y}-${String(m).padStart(2, "0")}`;
+    keys.push(k); months[k] = months[k] || {all: 0, fix: 0};
+    if (++m > 12) { m = 1; y++; }
+  }
+  const max = Math.max(...keys.map((k) => months[k].all));
+  const w = 100 / keys.length;
+  const bars = keys.map((k, i) => {
+    const h = (months[k].all / max) * 52, f = (months[k].fix / max) * 52;
+    return `<g><title>${k}: ${months[k].all} commits, ${months[k].fix} fixes</title>
+      <rect x="${i * w + w * .12}%" y="${58 - h}" width="${w * .76}%" height="${h}" fill="var(--line)"/>
+      <rect x="${i * w + w * .12}%" y="${58 - f}" width="${w * .76}%" height="${f}" fill="var(--hi)"/></g>`;
+  }).join("");
+  return `<svg class="spark" role="img" aria-label="Commits per month, fixes highlighted">${bars}
+    <text x="0" y="63" font-size="9" fill="var(--mute)">${keys[0]}</text>
+    <text x="100%" y="63" font-size="9" fill="var(--mute)" text-anchor="end">${keys[keys.length - 1]}</text></svg>`;
+}
+
+function timelineHTML(events) {
+  if (!events.length) return `<div class="empty">No history.</div>`;
+  return `<div class="tl">${events.map((e) => `
+    <div class="ev ${e.fix ? "fix" : ""}">
+      <div class="d">${esc(e.date)} · ${esc(e.sha)}</div>
+      <div class="s">${e.fix ? '<span class="tag">FIX</span>' : ""}${esc(e.subject)}</div>
+      <div class="m">${esc(e.author)} · ${e.lines} lines</div>
+    </div>`).join("")}</div>`;
+}
+
+async function select(path) {
+  SELECTED = path;
+  renderList();
+  const s = REPORT.services.find((x) => x.path === path);
+  const p = s.protections;
+  let tl = {events: []};
+  try { tl = await api("/api/timeline?path=" + encodeURIComponent(path)); } catch (e) {}
+  $("detail").innerHTML = `
+    <h2>${esc(s.name)}</h2>
+    <div class="sub">Priority ${s.priority} · last fix ${esc(s.last_fix || "none")}</div>
+    <div class="chips">${chip("timeout", p.timeout)}${chip("retry", p.retry)}${chip("circuit breaker", p.circuit_breaker)}${chip("fallback", p.fallback)}</div>
+    <div class="stats">
+      <div class="stat"><b>${s.commits}</b><span>commits</span></div>
+      <div class="stat"><b>${s.fix_commits}</b><span>look like fixes</span></div>
+      <div class="stat"><b>${s.lines_changed}</b><span>lines changed</span></div>
+      <div class="stat"><b>${s.authors}</b><span>authors</span></div>
+    </div>
+    ${s.hot_files.length ? `<h3>Hot files (click for story)</h3>` + s.hot_files.map(([f, n]) =>
+      `<div class="row"><a class="file" data-file="${esc(f)}">${esc(f)}</a><span class="sub">${n} commits</span></div>`).join("") : ""}
+    ${s.findings.length ? `<h3>Resilience gaps</h3>` + s.findings.map((f) =>
+      `<div class="row"><span class="sev ${f.severity}">${f.severity}</span><div>${esc(f.message)}<div class="loc">${esc(f.file)}:${f.line}</div></div></div>`).join("") : ""}
+    ${s.chaos_plan.length ? `<h3>Chaos plan</h3>` + s.chaos_plan.map((c) => {
+      const cmd = `hindsight chaos --listen 9001 --upstream HOST:PORT ${c.flags}`;
+      return `<div class="chaos"><div><code>${esc(cmd)}</code><small>${esc(c.why)}</small></div><button data-copy="${esc(cmd)}">Copy</button></div>`;
+    }).join("") : ""}
+    <h3>Chaos drill${s.priority_basis === "measured" ? " (priority uses this measured score)" : ""}</h3>
+    ${s.drill ? `
+      <div class="score"><b class="g-${s.drill.grade}">${esc(s.drill.grade)}</b><span>${s.drill.score}/100</span>
+        <span class="sub">${esc((s.drill.at || "").replace("T", " ").replace("+00:00", " UTC"))}</span></div>
+      ${s.drill.scenarios.map((c) => `<div class="row"><span class="v ${esc(c.verdict)}">${esc(c.verdict)}</span>
+        <div>${esc(c.scenario)}<div class="loc">${esc(c.note)}</div></div></div>`).join("")}`
+      : `<div class="sub">${s.drill_configured ? "Not drilled yet." : "No drill configured. Add this service to hindsight.json."}</div>`}
+    ${s.drill_configured ? `<button id="drillbtn" style="margin-top:10px">${s.drill ? "Re-run drill" : "Run drill"}</button>` : ""}
+    <h3>Service timeline</h3>
+    ${spark(tl.events)}
+    <div id="tl">${timelineHTML(tl.events.slice(0, 60))}</div>
+    ${tl.events.length > 60 ? `<div class="sub">Showing newest 60 of ${tl.events.length}.</div>` : ""}`;
+  document.querySelectorAll("[data-file]").forEach((a) => a.onclick = () => showFile(a.dataset.file));
+  const db = $("drillbtn");
+  if (db) db.onclick = () => runDrill(path, db);
+  document.querySelectorAll("[data-copy]").forEach((b) => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; } catch (e) { b.textContent = "Copy failed"; }
+    setTimeout(() => b.textContent = "Copy", 1200);
+  });
+}
+
+async function runDrill(path, btn) {
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Running… (can take a minute)";
+  try {
+    const r = await fetch("/api/drill?service=" + encodeURIComponent(path), {method: "POST", headers: {"X-Hindsight": "1"}});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.statusText);
+    for (;;) {
+      await new Promise((res) => setTimeout(res, 1500));
+      const job = (await api("/api/drill/status"))[path];
+      if (!job || job.state !== "running") {
+        if (job && job.state === "error") throw new Error(job.msg);
+        break;
+      }
+    }
+    await load(true);
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = label;
+    btn.after(Object.assign(document.createElement("div"), {className: "err", textContent: e.message}));
+  }
+}
+
+async function showFile(path) {
+  try {
+    const tl = await api("/api/timeline?path=" + encodeURIComponent(path));
+    const ev = tl.events, fixes = ev.filter((e) => e.fix).length;
+    $("detail").innerHTML = `
+      <button class="back" id="back">← Back</button>
+      <h2 style="font-family:var(--mono);font-size:16px;word-break:break-all">${esc(path)}</h2>
+      <div class="sub">${ev.length} commits · ${fixes} fixes (${ev.length ? Math.round(100 * fixes / ev.length) : 0}%)
+        ${ev.length ? ` · born ${esc(ev[ev.length - 1].date)}: “${esc(ev[ev.length - 1].subject)}”` : ""}</div>
+      <h3>Activity</h3>${spark(ev)}
+      <h3>Why does this exist? Newest first</h3>${timelineHTML(ev)}`;
+    $("back").onclick = () => select(SELECTED);
+  } catch (e) { $("detail").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function load(refresh) {
+  try {
+    REPORT = await api("/api/report" + (refresh ? "?refresh=1" : ""));
+    $("repo").textContent = REPORT.repo;
+    if (REPORT.git_error) $("repo").textContent += "  ⚠ " + REPORT.git_error;
+    if (!REPORT.services.length) { $("detail").innerHTML = `<div class="empty">No services found.</div>`; return; }
+    renderList();
+    select(SELECTED && REPORT.services.some((s) => s.path === SELECTED) ? SELECTED : REPORT.services[0].path);
+  } catch (e) { $("detail").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+$("refresh").onclick = () => load(true);
+load(false);
+</script>
+</body>
+</html>
